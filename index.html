@@ -651,9 +651,44 @@ Programa Especial de Sistemas de Información Geográfica para Ciencias Sociales
      ********************/
     function openMethodology(){
       const html = `
-      <html><head><meta charset="utf-8">
-      <title>Metodología – Geoportal FAIS</title>
-      </head>
+<html><head><meta charset="utf-8">
+<title>Metodología – Geoportal FAIS</title>
+
+<style>
+  .photoRoll{
+    margin:14px 0 0 0;
+    border:1px solid #e6e6e6;
+    border-radius:14px;
+    padding:12px;
+    background:#fff;
+    max-height: 520px;        /* altura del “área scroll” */
+    overflow-y: auto;         /* scroll vertical */
+  }
+  .photoItem{
+    margin:0 0 14px 0;
+    padding:0 0 14px 0;
+    border-bottom:1px solid #f0f0f0;
+  }
+  .photoItem:last-child{
+    border-bottom:none;
+    margin-bottom:0;
+    padding-bottom:0;
+  }
+  .photoItem img{
+    width:100%;
+    height:auto;
+    border-radius:12px;
+    display:block;
+  }
+  .photoCap{
+    margin-top:8px;
+    font-size:12px;
+    color:#555;
+  }
+  .photoCap b{ color:#222; }
+</style>
+
+</head>
       <body style="font-family:system-ui,Segoe UI,Arial;margin:18px;max-width:980px;line-height:1.55">
         <h2 style="margin:0 0 10px 0;color:#4a148c">METODOLOGÍA</h2>
 
@@ -777,7 +812,32 @@ Programa Especial de Sistemas de Información Geográfica para Ciencias Sociales
             <li>Generar evidencia cartográfica que facilite la comprensión de la distribución del FAIS.</li>
             <li>Aportar insumos para futuras evaluaciones y toma de decisiones.</li>
           </ul>
+          
         </div>
+          <h3 style="margin:14px 0 8px 0;color:#4a148c">Evidencia fotográfica</h3>
+
+  <div class="photoRoll" aria-label="Galería de fotos en scroll">
+    <div class="photoItem">
+      <img src="assets/fotos/metodo_01.jpg" alt="Foto metodología 01">
+      <div class="photoCap">
+        <b>Foto tomada por:</b> xxxxx xxxxx (febrero, 2026)
+      </div>
+    </div>
+
+    <div class="photoItem">
+      <img src="assets/fotos/metodo_02.jpg" alt="Foto metodología 02">
+      <div class="photoCap">
+        <b>Foto tomada por:</b> xxxxx xxxxx (febrero, 2026)
+      </div>
+    </div>
+
+    <div class="photoItem">
+      <img src="assets/fotos/metodo_03.jpg" alt="Foto metodología 03">
+      <div class="photoCap">
+        <b>Foto tomada por:</b> xxxxx xxxxx (febrero, 2026)
+      </div>
+    </div>
+  </div>
 
         <div style="margin-top:14px;font-size:12px;color:#666">
           Observatorio de Pueblos Indígenas, Recursos Naturales y Medio Ambiente – ProSIG-CSH, CIESAS
