@@ -1055,7 +1055,7 @@ async function doSearch(){
   if (!q) return;
 
   // 1) Intentar en tus localidades (capaLoc)
-  const found = searchInCapaLoc(q);
+  const found = searchIncapaLoc(q);
   if (found){
     const ll = found.getLatLng();
     map.setView(ll, 12);
@@ -1080,7 +1080,7 @@ async function doSearch(){
 document.getElementById("search-button").addEventListener("click", doSearch);
 
 // Enter
-document.getElementById("search-input").addEventListener("keypress", function (e) {
+document.getElementById("search-input").addEventListener("keydown", function (e) {
   if (e.key === "Enter") doSearch();
 });
   </script>
