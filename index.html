@@ -649,10 +649,18 @@ Programa Especial de Sistemas de Información Geográfica para Ciencias Sociales
     /********************
      * ✅ METODOLOGÍA
      ********************/
-    function openMethodology(){
-      const html = `
-<html><head><meta charset="utf-8">
-<title>Metodología – Geoportal FAIS</title>
+     function openMethodology(){
+  const html = `
+  <html><head><meta charset="utf-8">
+  <title>Metodología – Geoportal FAIS</title>
+  <base href="${location.href}">
+  </head>
+  <body> ... </body></html>`;
+  const w = window.open("", "_blank");
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
 
 <style>
   .photoRoll{
