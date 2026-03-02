@@ -989,35 +989,99 @@ Programa Especial de Sistemas de Información Geográfica para Ciencias Sociales
     // INIT
     loadMexico();
     // Función para buscar por nombre de localidad
-function searchLocation() {
-  const searchTerm = norm($("#search-input").value); // Obtén el valor del input
-  console.log("Buscando:", searchTerm); // Depuración: Verifica el término de búsqueda
+/********************
+ * 🔎 Buscador (1) Localidades FAIS (capaLoc) y (2) OpenStreetMap (Nominatim)
+ ********************/
+ let osmSearchMarker = null;
 
-  // Filtra las localidades con base en el nombre de la localidad
-  const foundFeature = capaloc.getLayers().find(layer => {
-    const props = layer.feature.properties || {};
-    const locName = props.LOCALIDAD || props.NOMBRE || "Localidad"; // Cambia a la propiedad que tengas
-    console.log("Comparando:", locName); // Depuración: Verifica el nombre de la localidad en cada capa
-    return norm(locName).includes(searchTerm);
+function flyToResult(lat, lon, displayName, bbox){
+  const ll = L.latLng(lat, lon);
+
+  // si viene bbox, mejor ajustar a bounds
+  if (bbox && bbox.length === 4){
+    const south = Number(bbox[0]), north = Number(bbox[1]);
+    const west  = Number(bbox[2]), east  = Number(bbox[3]);
+    const bounds = L.latLngBounds([[south, west],[north, east]]);
+    map.fitBounds(bounds, { padding:[30,30] });
+  } else {
+    map.setView(ll, 14);
+  }
+
+  if (osmSearchMarker) map.removeLayer(osmSearchMarker);
+  osmSearchMarker = L.marker(ll).addTo(map)
+    .bindPopup(`<b>${displayName}</b>`)
+    .openPopup();
+}
+
+async function searchOSM(q){
+  // Nominatim (OpenStreetMap). Puedes quitar countrycodes=mx si quieres búsqueda mundial.
+  const url =
+    "https://nominatim.openstreetmap.org/search" +
+    `?format=jsonv2&limit=1&addressdetails=1&accept-language=es&countrycodes=mx` +
+    `&q=${encodeURIComponent(q)}`;
+
+  const res = await fetch(url, {
+    headers: { "Accept": "application/json" }
   });
 
-  // Si se encuentra la localidad, centramos el mapa en ella
-  if (foundFeature) {
-    map.setView(foundFeature.getLatLng(), 10); // Ajusta el zoom si es necesario
-    foundFeature.openTooltip();
-  } else {
-    alert("Localidad no encontrada");
+  if (!res.ok) throw new Error("No se pudo consultar Nominatim (OSM).");
+  const data = await res.json();
+  if (!data || !data.length) return null;
+
+  const r = data[0];
+  return {
+    lat: Number(r.lat),
+    lon: Number(r.lon),
+    name: r.display_name,
+    bbox: r.boundingbox // [south, north, west, east]
+  };
+}
+
+function searchInCapaLoc(searchTerm){
+  if (!capaLoc) return null; // todavía no estás dentro de un estado o no se cargó
+  const term = norm(searchTerm);
+
+  const layers = capaLoc.getLayers();
+  const found = layers.find(layer => {
+    const props = layer.feature?.properties || {};
+    const locName = props.LOCALIDAD || props.NOMBRE || props.Nombre || "Localidad";
+    return norm(locName).includes(term);
+  });
+
+  return found || null;
+}
+async function doSearch(){
+  const q = ($("#search-input").value || "").trim();
+  if (!q) return;
+
+  // 1) Intentar en tus localidades (capaLoc)
+  const found = searchInCapaLoc(q);
+  if (found){
+    const ll = found.getLatLng();
+    map.setView(ll, 12);
+    found.openTooltip();
+    return;
+  }
+
+  // 2) Si no existe en capaLoc, buscar en OpenStreetMap
+  try{
+    const r = await searchOSM(q);
+    if (!r){
+      alert("No encontré resultados (ni en tus localidades ni en OpenStreetMap).");
+      return;
+    }
+    flyToResult(r.lat, r.lon, r.name, r.bbox);
+  }catch(err){
+    alert("Error en buscador OSM: " + err.message);
   }
 }
 
-// Evento para buscar al presionar la lupa
-document.getElementById("search-button").addEventListener("click", searchLocation);
+// Lupa
+document.getElementById("search-button").addEventListener("click", doSearch);
 
-// O también al presionar "Enter" en el campo de búsqueda
+// Enter
 document.getElementById("search-input").addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-        searchLocation();
-    }
+  if (e.key === "Enter") doSearch();
 });
   </script>
 </body>
