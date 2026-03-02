@@ -1054,7 +1054,7 @@ async function doSearch(){
   const q = ($("search-input").value || "").trim();
   if (!q) return;
 
-  // 1) Intentar en tus localidades (capaLoc)
+  // 1) Intentar en tus localidades del estado actual (capaLoc)
   const found = searchInCapaLoc(q);
   if (found){
     const ll = found.getLatLng();
@@ -1063,7 +1063,26 @@ async function doSearch(){
     return;
   }
 
-  // 2) Si no existe en capaLoc, buscar en OpenStreetMap
+  // 2) Buscar en TODOS los estados (archivos en data/ESTADOS/)
+  const hit = await searchInAllStatesLocalidades(q);
+  if (hit){
+    // entrar al estado donde se encontró
+    await enterState(hit.slug);
+
+    // ya cargó capaLoc de ese estado; ahora intenta abrir el tooltip del layer real
+    const again = searchInCapaLoc(hit.displayName);
+    if (again){
+      const ll = again.getLatLng();
+      map.setView(ll, 12);
+      again.openTooltip();
+    }else{
+      // fallback: centra aunque no encuentre el layer exacto
+      map.setView([hit.lat, hit.lon], 12);
+    }
+    return;
+  }
+
+  // 3) Si no existe en tus GeoJSON, buscar en OpenStreetMap
   try{
     const r = await searchOSM(q);
     if (!r){
@@ -1074,6 +1093,49 @@ async function doSearch(){
   }catch(err){
     alert("Error en buscador OSM: " + err.message);
   }
+}
+async function searchInAllStatesLocalidades(searchTerm){
+  const term = norm(searchTerm);
+  if (!term) return null;
+
+  for (const st of ESTADOS){
+    const url = `${DATA_ESTADOS_DIR}/${st.slug}_loc_monto.geojson`;
+
+    try{
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) continue; // si ese estado no existe en tu carpeta, lo salta
+
+      const gj = await res.json();
+      const feats = gj.features || [];
+
+      const hit = feats.find(ft => {
+        const p = ft.properties || {};
+        const locName = p.LOCALIDAD || p.NOMBRE || p.Nombre || "";
+        return norm(locName).includes(term);
+      });
+
+      if (hit){
+        // coordenadas del punto (GeoJSON: [lon, lat])
+        const coords = hit.geometry?.coordinates;
+        if (!coords || coords.length < 2) return null;
+
+        return {
+          slug: st.slug,
+          nombreEstado: st.nombre,
+          feature: hit,
+          lat: Number(coords[1]),
+          lon: Number(coords[0]),
+          displayName: (hit.properties?.LOCALIDAD || hit.properties?.NOMBRE || "Localidad")
+        };
+      }
+
+    }catch(e){
+      // si un archivo está malformado, no rompas todo: solo sáltalo
+      continue;
+    }
+  }
+
+  return null;
 }
 
 // Lupa
