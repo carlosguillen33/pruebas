@@ -1051,11 +1051,11 @@ function searchInCapaLoc(searchTerm){
   return found || null;
 }
 async function doSearch(){
-  const q = ($("#search-input").value || "").trim();
+  const q = ($("search-input").value || "").trim();
   if (!q) return;
 
   // 1) Intentar en tus localidades (capaLoc)
-  const found = searchIncapaLoc(q);
+  const found = searchInCapaLoc(q);
   if (found){
     const ll = found.getLatLng();
     map.setView(ll, 12);
